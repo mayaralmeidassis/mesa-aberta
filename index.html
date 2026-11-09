@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mesa Aberta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Sans+Symbols+2&display=swap">
+<style>
+/* Layout: cabeçalho com marca, trilha de 6 etapas, painel de trabalho à esquerda e prévia do cardápio do cliente à direita (empilha no celular). */
+:root{
+  --bg:#F4F7FB; --surface:#FFFFFF; --ink:#0F2A4A; --ink2:#3D5573; --line:#C9D6E5;
+  --primary:#0F2A4A; --primary-ink:#FFFFFF; --accent:#F2A33A; --focus:#1B6FD1;
+  --soft:#E8EFF7; --ok:#14683A; --warn-bg:#FFF3D6; --warn-ink:#5C3B00;
+  --font:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --braille:'Noto Sans Symbols 2','Segoe UI Symbol','Apple Braille','DejaVu Sans',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1626; --surface:#12233B; --ink:#EAF1FA; --ink2:#A9BCD3; --line:#2A3F5C;
+  --primary:#F2A33A; --primary-ink:#0F2A4A; --accent:#F2A33A; --focus:#7DB7FF;
+  --soft:#1A2F4C; --ok:#6FD79A; --warn-bg:#3A2B0A; --warn-ink:#FFD98A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1626; --surface:#12233B; --ink:#EAF1FA; --ink2:#A9BCD3; --line:#2A3F5C;
+  --primary:#F2A33A; --primary-ink:#0F2A4A; --accent:#F2A33A; --focus:#7DB7FF;
+  --soft:#1A2F4C; --ok:#6FD79A; --warn-bg:#3A2B0A; --warn-ink:#FFD98A; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45;
+  padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1200px;margin:0 auto}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+header.top{display:flex;align-items:center;gap:16px;padding-block:20px 8px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand svg{flex:none}
+.brand h1{margin:0;font-size:34px;line-height:1;letter-spacing:-.8px}
+.brand p{margin:2px 0 0;color:var(--ink2);font-size:16px}
+.steps{display:flex;gap:8px;overflow-x:auto;padding-block:12px;margin:0;list-style:none}
+.steps li{flex:none}
+@media (min-width:900px){.steps{flex-wrap:wrap;overflow:visible}}
+.steps button{display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 14px 6px 8px;border-radius:24px;border:2px solid var(--line);background:var(--surface);cursor:pointer;white-space:nowrap}
+.steps .n{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--soft);font-weight:700}
+.steps button[aria-current="step"]{border-color:var(--ink);background:var(--primary);color:var(--primary-ink)}
+.steps button[aria-current="step"] .n{background:var(--accent);color:#0F2A4A}
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+@media (min-width:980px){.layout{grid-template-columns:minmax(0,1fr) 400px}.pvcol{position:sticky;top:16px}}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.card h2{margin:0 0 4px;font-size:28px;line-height:1.15;text-wrap:balance}
+.lead{margin:0 0 16px;color:var(--ink2)}
+.banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:16px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.dish{border:2px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1 1 180px;min-width:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:15px;font-weight:700}
+label.f span.h{font-weight:400;color:var(--ink2)}
+input[type=text],input[type=url],textarea,select{width:100%;min-height:46px;padding:10px 12px;border:2px solid var(--ink2);border-radius:10px;background:var(--surface);font-weight:400}
+textarea{resize:vertical;min-height:96px}
+.btn{min-height:48px;padding:10px 18px;border-radius:12px;border:2px solid var(--ink);background:var(--surface);font-weight:700;cursor:pointer}
+.btn.p{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.btn.s{min-height:44px;padding:8px 14px;font-size:15px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px;flex-wrap:wrap}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;border:0;margin:0;padding:0}
+.opts legend{font-weight:700;margin-bottom:8px;padding:0}
+.opt{position:relative;display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;border:2px solid var(--line);border-radius:12px;cursor:pointer;background:var(--surface)}
+.opt input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.opt:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.opt:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.sw{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:8px;border:2px solid;font-weight:700}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px}
+.chk input{width:22px;height:22px}
+.note{font-size:15px;color:var(--ink2)}
+.status{min-height:24px;font-size:15px;color:var(--ink2)}
+.sheet{border:2px solid var(--line);border-radius:12px;background:#fff;color:#0F2A4A;padding:16px;overflow-x:auto}
+.sheet .bl{font-family:var(--braille);font-size:26px;line-height:1.25;white-space:pre;letter-spacing:2px}
+.sheet .bt{font-size:12px;color:#3D5573;white-space:pre;margin-bottom:6px;min-height:15px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.stats li{background:var(--soft);border-radius:10px;padding:10px 12px}
+.stats b{display:block;font-size:24px}
+.qrbox{display:grid;place-items:center;background:#fff;border:2px solid var(--line);border-radius:12px;padding:16px;width:min(100%,260px);aspect-ratio:1}
+.qrbox svg{width:100%;height:100%}
+.pv{border-radius:16px;border:3px solid var(--pline);background:var(--pbg);color:var(--pink);padding:18px;font-size:var(--pfs,20px)}
+.pv h3{margin:0;font-size:1.15em;line-height:1.2}
+.pv .pt{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pv .pp{color:var(--pacc);font-weight:700;white-space:nowrap}
+.pv .pd{border-top:2px solid var(--pline);padding-block:12px;display:flex;flex-direction:column;gap:6px}
+.pv .pd p{margin:0;font-size:.85em}
+.pv .pb{font-family:var(--braille);font-size:1.1em;letter-spacing:2px;word-break:break-all}
+.pv .pa{display:flex;gap:8px;flex-wrap:wrap}
+.pv .pbtn{min-height:44px;padding:6px 14px;border:2px solid var(--pink);border-radius:10px;background:transparent;color:var(--pink);font-size:.8em;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.pv .pbtn:focus-visible{outline:3px solid var(--pacc);outline-offset:2px}
+.pvhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.pvhead h2{margin:0;font-size:20px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{min-height:40px;padding:4px 12px;border-radius:20px;border:2px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700;font-size:15px}
+.chip[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.algs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;border:0;margin:0;padding:0}
+.algs legend{font-weight:700;margin-bottom:8px;padding:0;font-size:15px}
+.al{position:relative;display:flex;align-items:center;gap:8px;min-height:52px;padding:6px 10px;border:2px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;font-size:15px;line-height:1.2}
+.al input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0;width:100%;height:100%}
+.al:has(input:checked){border-color:var(--primary);background:var(--primary);color:var(--primary-ink)}
+.al:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.al svg{flex:none;width:32px;height:32px}
+.al small{display:block;font-size:12px;opacity:.85}
+details summary{cursor:pointer}
+.pv .pal{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8em}
+.pv .alp{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--pink);border-radius:10px;padding:2px 8px 2px 4px;min-height:36px}
+.pv .alp svg{width:1.7em;height:1.7em;flex:none}
+.pv .alp.tr{border-style:dashed}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+</style>
+
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="al-gluten" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 44V14"/><ellipse cx="24" cy="8" rx="3" ry="5"/><ellipse cx="16.5" cy="17" rx="3" ry="6" transform="rotate(-35 16.5 17)"/><ellipse cx="31.5" cy="17" rx="3" ry="6" transform="rotate(35 31.5 17)"/><ellipse cx="16.5" cy="29" rx="3" ry="6" transform="rotate(-35 16.5 29)"/><ellipse cx="31.5" cy="29" rx="3" ry="6" transform="rotate(35 31.5 29)"/></g></symbol>
+<symbol id="al-crustaceos" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="28" rx="12" ry="8"/><path d="M13 24L7 17M35 24L41 17"/><path d="M7 17C3 12 8 8 12 11M41 17C45 12 40 8 36 11"/><path d="M16 34L10 40M22 36L20 43M26 36L28 43M32 34L38 40"/><path d="M20 20L19 16M28 20L29 16"/></g></symbol>
+<symbol id="al-ovos" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6C33 6 38 20 38 28C38 36 32 42 24 42C16 42 10 36 10 28C10 20 15 6 24 6Z"/><path d="M17 30C17 34 19 36 22 37"/></g></symbol>
+<symbol id="al-peixes" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 24C13 12 27 12 35 24C27 36 13 36 5 24Z"/><path d="M35 24L44 15V33Z"/><circle cx="14" cy="22" r="1.5" fill="currentColor"/></g></symbol>
+<symbol id="al-amendoim" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 5C31 5 33 12 30 17C28 20 28 21 30 24C34 29 32 40 24 43C16 40 14 29 18 24C20 21 20 20 18 17C15 12 17 5 24 5Z"/><path d="M22 12h.1M27 32h.1M21 35h.1"/></g></symbol>
+<symbol id="al-soja" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 37C5 20 20 7 41 7C43 28 28 43 7 37Z"/><circle cx="16" cy="30" r="3.2"/><circle cx="24.5" cy="23" r="3.2"/><circle cx="32" cy="15.5" r="3.2"/></g></symbol>
+<symbol id="al-leite" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V42H34V18"/><path d="M14 18L19 8H29L34 18Z"/><path d="M14 18H34"/><path d="M19 31C21 27 27 35 29 31"/></g></symbol>
+<symbol id="al-castanhas" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 14C14 14 9 24 12 33C15 41 33 41 36 33C39 24 34 14 24 14Z"/><path d="M13 18C13 8 35 8 35 18Z"/><path d="M24 8V4"/><path d="M19 26C19 31 21 35 24 35"/></g></symbol>
+<symbol id="al-moluscos" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 41L8 22C8 9 40 9 40 22Z"/><path d="M24 41L15 13M24 41V11M24 41L33 13"/><path d="M16 44H32"/></g></symbol>
+<symbol id="al-gergelim" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="14" cy="18" rx="4.5" ry="8" transform="rotate(-35 14 18)"/><ellipse cx="33" cy="14" rx="4.5" ry="8" transform="rotate(30 33 14)"/><ellipse cx="21" cy="35" rx="4.5" ry="8" transform="rotate(-10 21 35)"/><ellipse cx="38" cy="34" rx="4.5" ry="8" transform="rotate(35 38 34)"/></g></symbol>
+<symbol id="al-mostarda" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21H33V41H15Z"/><path d="M19 21V13H29V21"/><path d="M22 13V7H26V13"/><path d="M15 31H33"/></g></symbol>
+<symbol id="al-aipo" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 43V20M24 43L14 22M24 43L34 22"/><circle cx="24" cy="13" r="6"/><circle cx="12" cy="16" r="5"/><circle cx="36" cy="16" r="5"/></g></symbol>
+<symbol id="al-sulfitos" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7H35C35 21 31 28 24 28C17 28 13 21 13 7Z"/><path d="M24 28V41M16 43H32"/><path d="M14 15H34"/></g></symbol>
+</defs></svg>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 120 120" width="64" height="64" role="img" aria-label="Logo Mesa Aberta">
+      <path d="M 99.32 87.53 A 48 48 0 1 1 99.32 32.47" fill="none" style="stroke:var(--ink)" stroke-width="9" stroke-linecap="round"></path>
+      <circle cx="50" cy="42" r="7" style="fill:var(--ink)"></circle>
+      <circle cx="50" cy="78" r="7" style="fill:var(--ink)"></circle>
+      <circle cx="70" cy="42" r="7" style="fill:var(--ink)"></circle>
+      <circle cx="50" cy="60" r="5.5" fill="none" style="stroke:var(--ink)" stroke-width="2" opacity=".35"></circle>
+      <circle cx="70" cy="60" r="5.5" fill="none" style="stroke:var(--ink)" stroke-width="2" opacity=".35"></circle>
+      <circle cx="70" cy="78" r="5.5" fill="none" style="stroke:var(--ink)" stroke-width="2" opacity=".35"></circle>
+      <circle cx="99.3" cy="60" r="6.5" fill="#F2A33A"></circle>
+    </svg>
+    <div><h1>Mesa Aberta</h1><p>Cardápios para todos.</p></div>
+  </div>
+</header>
+<nav aria-label="Etapas"><ol class="steps" id="steps"></ol></nav>
+<div class="layout">
+  <main class="card" id="panel" tabindex="-1"></main>
+  <aside class="pvcol" aria-label="Prévia do cardápio do cliente">
+    <div class="pvhead"><h2>Como o cliente vê</h2><div class="chips" id="pvchips"></div></div>
+    <div id="preview"></div>
+  </aside>
+</div>
+<p class="sr" role="status" id="toast"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+'use strict';
+var KEY='mesa-aberta-v1';
+var STEPS=['Informações básicas','Alérgenos','Contraste e cores','Audiodescrição','Libras e tradução','Braille','Publicação e QR Code'];
+var THEMES={
+  padrao:{n:'Padrão',bg:'#FFFFFF',ink:'#0F2A4A',acc:'#8A5A00',line:'#C9D6E5'},
+  alto:{n:'Alto contraste',bg:'#000000',ink:'#FFE500',acc:'#FFFFFF',line:'#FFE500'},
+  dalt:{n:'Para daltonismo',bg:'#FFFFFF',ink:'#0B2B66',acc:'#B34700',line:'#8FA3C2'},
+  escuro:{n:'Escuro',bg:'#0F2A4A',ink:'#FFFFFF',acc:'#F2A33A',line:'#3D5573'}
+};
+var SIZES=[{n:'Normal',px:16},{n:'Grande',px:21},{n:'Muito grande',px:26}];
+
+function mk(id,name,ing,price,al,tr){return {id:id,name:name,ing:ing,price:price,al:al||[],tr:tr||[],alOk:!!(al||tr),desc:'',libras:'',enName:'',enIng:'',esName:'',esIng:'',simple:''};}
+function defaults(){return {step:0,example:true,restaurant:'Restaurante Exemplo',theme:'padrao',size:1,lang:'pt',rate:1,
+  url:'https://exemplo.com.br/cardapio',showIng:true,showPrice:true,showAl:true,width:32,pvBraille:false,nextId:5,
+  dishes:[mk(1,'Feijoada completa','Feijão preto, carne seca, linguiça, arroz, couve, laranja','38,00',[],['gluten']),
+          mk(2,'Moqueca de peixe','Peixe, leite de coco, dendê, pimentão, coentro','54,00',['peixes'],[]),
+          mk(3,'Salada de quinoa','Quinoa, tomate, pepino, hortelã','29,50',[],[]),
+          mk(4,'Pudim de leite','Leite condensado, ovos, calda de açúcar','16,00',['leite','ovos'],[])]};}
+function load(){try{var j=localStorage.getItem(KEY);if(j){var o=JSON.parse(j);if(o&&o.dishes){o.dishes.forEach(function(d){if(!d.al)d.al=[];if(!d.tr)d.tr=[];});if(!(o.step>=0&&o.step<7))o.step=0;return Object.assign(defaults(),o);}}}catch(e){}return defaults();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+var ALG=[
+ {k:'gluten',pt:'Glúten',en:'Gluten',es:'Gluten',sub:'trigo, centeio, cevada, aveia',br:1},
+ {k:'crustaceos',pt:'Crustáceos',en:'Crustaceans',es:'Crustáceos',sub:'camarão, siri',br:1},
+ {k:'ovos',pt:'Ovos',en:'Eggs',es:'Huevos',br:1},
+ {k:'peixes',pt:'Peixes',en:'Fish',es:'Pescado',br:1},
+ {k:'amendoim',pt:'Amendoim',en:'Peanuts',es:'Cacahuetes',br:1},
+ {k:'soja',pt:'Soja',en:'Soy',es:'Soja',br:1},
+ {k:'leite',pt:'Leite',en:'Milk',es:'Leche',sub:'e derivados',br:1},
+ {k:'castanhas',pt:'Castanhas e nozes',en:'Tree nuts',es:'Frutos de cáscara',sub:'amêndoa, caju, pará, noz',br:1},
+ {k:'moluscos',pt:'Moluscos',en:'Molluscs',es:'Moluscos',sub:'mexilhão, ostra, lula'},
+ {k:'gergelim',pt:'Gergelim',en:'Sesame',es:'Sésamo'},
+ {k:'mostarda',pt:'Mostarda',en:'Mustard',es:'Mostaza'},
+ {k:'aipo',pt:'Aipo',en:'Celery',es:'Apio'},
+ {k:'sulfitos',pt:'Sulfitos',en:'Sulphites',es:'Sulfitos',sub:'vinho, frutas secas'}];
+var ALGMAP={};ALG.forEach(function(a){ALGMAP[a.k]=a;});
+var ALL={pt:{c:'Contém',m:'Pode conter'},en:{c:'Contains',m:'May contain'},es:{c:'Contiene',m:'Puede contener'}};
+function alIcon(k){return '<svg viewBox="0 0 48 48" aria-hidden="true"><use href="#al-'+k+'"/></svg>';}
+function algNames(arr,lg){return (arr||[]).filter(function(k){return ALGMAP[k];}).map(function(k){return ALGMAP[k][lg||'pt'];}).join(', ');}
+function pvAl(d,lg){var h='',L=ALL[lg]||ALL.pt;
+  if(d.al&&d.al.length)h+='<div class="pal"><b>'+L.c+':</b>'+d.al.map(function(k){return '<span class="alp">'+alIcon(k)+esc(ALGMAP[k][lg])+'</span>';}).join('')+'</div>';
+  if(d.tr&&d.tr.length)h+='<div class="pal"><b>'+L.m+':</b>'+d.tr.map(function(k){return '<span class="alp tr">'+alIcon(k)+esc(ALGMAP[k][lg])+'</span>';}).join('')+'</div>';
+  return h;}
+var S=load(), DL=null, SM=null, tBusy=false;
+
+var $=function(s){return document.querySelector(s);};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function dish(id){return S.dishes.filter(function(d){return d.id===id;})[0];}
+function toast(m){var t=$('#toast');t.textContent='';setTimeout(function(){t.textContent=m;},30);}
+
+/* ---------- texto falado ---------- */
+function listPT(ing){var a=String(ing||'').split(',').map(function(x){return x.trim();}).filter(Boolean);
+  if(a.length<2)return a.join('');return a.slice(0,-1).join(', ')+' e '+a[a.length-1];}
+function priceSpoken(p){var m=String(p||'').replace(/[^\d,\.]/g,'').replace('.',',').split(',');
+  var r=parseInt(m[0],10);if(isNaN(r))return '';var c=m[1]?parseInt((m[1]+'0').slice(0,2),10):0;
+  var s=r+(r===1?' real':' reais');if(c)s+=' e '+c+' centavos';return s;}
+function autoDesc(d){var t=(d.name||'Prato sem nome')+'.';if(d.ing)t+=' Ingredientes: '+listPT(d.ing)+'.';
+  if(d.al&&d.al.length)t+=' Contém: '+listPT(algNames(d.al,'pt'))+'.';
+  if(d.tr&&d.tr.length)t+=' Pode conter traços de: '+listPT(algNames(d.tr,'pt'))+'.';
+  var p=priceSpoken(d.price);if(p)t+=' Preço: '+p+'.';return t;}
+function descOf(d){return d.desc||autoDesc(d);}
+function speak(text,lang){
+  try{var ss=window.speechSynthesis;if(!ss||!window.SpeechSynthesisUtterance){toast('Este navegador não tem voz para ler em voz alta.');return;}
+    ss.cancel();var u=new SpeechSynthesisUtterance(text);u.lang=lang||'pt-BR';u.rate=Number(S.rate)||1;
+    var v=ss.getVoices().filter(function(x){return x.lang&&x.lang.toLowerCase().indexOf((lang||'pt-BR').slice(0,2).toLowerCase())===0;})[0];
+    if(v)u.voice=v;ss.speak(u);}catch(e){toast('Não foi possível ler em voz alta aqui.');}
+}
+
+/* ---------- braille (Grafia Braille para a Língua Portuguesa, grau 1) ---------- */
+var BL={a:'⠁',b:'⠃',c:'⠉',d:'⠙',e:'⠑',f:'⠋',g:'⠛',h:'⠓',i:'⠊',j:'⠚',k:'⠅',l:'⠇',m:'⠍',n:'⠝',o:'⠕',p:'⠏',q:'⠟',r:'⠗',s:'⠎',t:'⠞',u:'⠥',v:'⠧',w:'⠺',x:'⠭',y:'⠽',z:'⠵',
+  'ç':'⠯','á':'⠷','à':'⠫','â':'⠡','ã':'⠜','é':'⠿','ê':'⠣','í':'⠌','ó':'⠬','ô':'⠹','õ':'⠪','ú':'⠾','ü':'⠳'};
+var DIG={'1':'⠁','2':'⠃','3':'⠉','4':'⠙','5':'⠑','6':'⠋','7':'⠛','8':'⠓','9':'⠊','0':'⠚'};
+var PUN={',':'⠂','.':'⠄',';':'⠆',':':'⠒','?':'⠢','!':'⠖','-':'⠤','"':'⠦','(':'⠣',')':'⠜','$':'⠰','%':'⠸⠴'};
+var ASCII_BRF=" A1B'K2L@CIF/MSP\"E3H9O6R^DJG>NTQ,*5<-U8V.%[$+X!&;:4\\0Z7(_?W]#Y)=";
+function convWord(w,un){
+  var ch=Array.from(w),letters=ch.filter(function(c){return c.toLowerCase()!==c.toUpperCase();});
+  var allCaps=letters.length>1&&letters.every(function(c){return c===c.toUpperCase();});
+  var out=allCaps?'⠨⠨':'',inNum=false;
+  for(var i=0;i<ch.length;i++){var c=ch[i];
+    if(DIG[c]){if(!inNum){out+='⠼';inNum=true;}out+=DIG[c];continue;}
+    if(inNum&&(c===','||c==='.')&&DIG[ch[i+1]||'']){out+=PUN[c];continue;}
+    inNum=false;var lo=c.toLowerCase();
+    if(BL[lo]){if(!allCaps&&c!==lo)out+='⠨';out+=BL[lo];}
+    else if(PUN[c])out+=PUN[c];
+    else if(un)un[c]=1;}
+  return out;}
+function wrapPara(text,width,un){
+  var words=String(text).split(/\s+/).filter(Boolean),lines=[],b='',t='';
+  if(!words.length)return [{b:'',t:''}];
+  words.forEach(function(w){var bw=convWord(w,un);
+    if(bw.length>width){if(b){lines.push({b:b,t:t});b='';t='';}
+      for(var i=0;i<bw.length;i+=width)lines.push({b:bw.slice(i,i+width),t:i?'':w});return;}
+    if(b&&b.length+1+bw.length>width){lines.push({b:b,t:t});b='';t='';}
+    b=b?b+'⠀'+bw:bw;t=t?t+' '+w:w;});
+  if(b)lines.push({b:b,t:t});return lines;}
+function fmtPrice(p){p=String(p||'').trim();return /^r\$/i.test(p)?p:'R$ '+p;}
+function buildSheet(){
+  var un={},lines=[],W=Number(S.width)||32;
+  function add(t){wrapPara(t,W,un).forEach(function(l){lines.push(l);});}
+  function gap(){lines.push({b:'',t:''});}
+  add(S.restaurant||'Cardápio');gap();
+  S.dishes.forEach(function(d){
+    if(!d.name&&!d.ing&&!d.price)return;
+    add(d.name||'Prato sem nome');
+    if(S.showIng&&d.ing)add('Ingredientes: '+d.ing);
+    if(S.showAl&&d.al&&d.al.length)add('Contém: '+algNames(d.al,'pt'));
+    if(S.showAl&&d.tr&&d.tr.length)add('Pode conter: '+algNames(d.tr,'pt'));
+    if(S.showPrice&&d.price)add('Preço: '+fmtPrice(d.price));
+    gap();});
+  while(lines.length&&!lines[lines.length-1].b)lines.pop();
+  return {lines:lines,un:Object.keys(un)};}
+function paginate(lines){var p=[];for(var i=0;i<lines.length;i+=25)p.push(lines.slice(i,i+25));return p;}
+function toASCII(u){return Array.from(u).map(function(c){var n=c.charCodeAt(0)-0x2800;return n>=0&&n<64?ASCII_BRF[n]:c;}).join('');}
+function sheetText(ascii){var pages=paginate(buildSheet().lines);
+  return pages.map(function(pg){return pg.map(function(l){var s=l.b.replace(/⠀/g,' ');return ascii?toASCII(l.b):l.b;}).join('\r\n');}).join(ascii?'\r\n\f':'\r\n\r\n');}
+
+/* ---------- downloads ---------- */
+function dl(name,data){
+  if(!DL){toast('Salvar arquivos não está disponível nesta tela.');return;}
+  DL.save({filename:name,data:data}).then(function(){toast('Arquivo salvo.');}).catch(function(e){
+    if(e&&e.code==='declined')return;toast('Não foi possível salvar o arquivo.');});}
+
+/* ---------- renderização ---------- */
+function renderNav(){
+  $('#steps').innerHTML=STEPS.map(function(n,i){
+    return '<li><button type="button" data-a="go" data-id="'+i+'"'+(i===S.step?' aria-current="step"':'')+'><span class="n">'+(i+1)+'</span>'+esc(n)+'</button></li>';}).join('');}
+
+function navBtns(){
+  return '<div class="nav">'+(S.step>0?'<button type="button" class="btn" data-a="prev">Voltar</button>':'<span></span>')+
+    (S.step<STEPS.length-1?'<button type="button" class="btn p" data-a="next">Continuar</button>':'')+'</div>';}
+
+function pStep0(){
+  return '<h2>Informações básicas</h2><p class="lead">Cadastre os pratos: nome, ingredientes e preço. Todo o cardápio acessível parte daqui.</p>'+
+  (S.example?'<div class="banner">Estes pratos são exemplos. Troque pelos do seu restaurante.</div>':'')+
+  '<div class="stack"><label class="f" for="rest">Nome do restaurante<input type="text" id="rest" data-f="restaurant" value="'+esc(S.restaurant)+'"></label>'+
+  S.dishes.map(function(d,i){var k='d'+d.id;return '<div class="dish"><div class="row">'+
+    '<label class="f" for="'+k+'n">Prato '+(i+1)+'<input type="text" id="'+k+'n" data-f="d.name" data-id="'+d.id+'" value="'+esc(d.name)+'"></label>'+
+    '<label class="f" for="'+k+'p" style="flex:0 1 140px">Preço (R$)<input type="text" inputmode="decimal" id="'+k+'p" data-f="d.price" data-id="'+d.id+'" value="'+esc(d.price)+'"></label></div>'+
+    '<label class="f" for="'+k+'i">Ingredientes <span class="h">separe por vírgula</span><input type="text" id="'+k+'i" data-f="d.ing" data-id="'+d.id+'" value="'+esc(d.ing)+'"></label>'+
+    '<div><button type="button" class="btn s" data-a="rm" data-id="'+d.id+'">Remover este prato</button></div></div>';}).join('')+
+  '<div><button type="button" class="btn" data-a="add">Adicionar prato</button></div></div>'+navBtns();}
+
+function chip(d,mode,a){var on=(d[mode]||[]).indexOf(a.k)>=0;
+  return '<label class="al"><input type="checkbox" data-al="'+mode+'" data-k="'+a.k+'" data-id="'+d.id+'"'+(on?' checked':'')+'>'+alIcon(a.k)+'<span>'+esc(a.pt)+(a.sub?'<small>'+esc(a.sub)+'</small>':'')+'</span></label>';}
+function pStepAl(){
+  var br=ALG.filter(function(a){return a.br;}),ot=ALG.filter(function(a){return !a.br;});
+  return '<h2>Alérgenos</h2><p class="lead">Marque os alérgenos de cada prato. Cada um ganha um pictograma e o nome escrito, que o cliente vê no cardápio, ouve na audiodescrição e lê no braille.</p>'+
+  '<div class="banner">A informação é de responsabilidade do restaurante. Marque tudo o que o prato leva, inclusive o que pode chegar por contato na cozinha.</div>'+
+  '<div class="stack">'+S.dishes.map(function(d){var k='d'+d.id;return '<div class="dish"><strong>'+esc(d.name||'Prato sem nome')+'</strong>'+
+    '<fieldset class="algs"><legend>Contém · lista da Anvisa</legend>'+br.map(function(a){return chip(d,'al',a);}).join('')+'</fieldset>'+
+    '<fieldset class="algs"><legend>Contém · outros alérgenos comuns</legend>'+ot.map(function(a){return chip(d,'al',a);}).join('')+'</fieldset>'+
+    '<details'+((d.tr&&d.tr.length)?' open':'')+'><summary class="btn s" style="display:inline-flex;align-items:center">Pode conter traços (contato na cozinha)</summary>'+
+    '<fieldset class="algs" style="margin-top:10px"><legend class="sr">Pode conter traços de</legend>'+ALG.map(function(a){return chip(d,'tr',a);}).join('')+'</fieldset></details>'+
+    '<label class="chk" for="'+k+'ok"><input type="checkbox" id="'+k+'ok" data-f="d.alOk" data-id="'+d.id+'"'+(d.alOk?' checked':'')+'>Revisei os alérgenos deste prato</label></div>';}).join('')+
+  '<p class="note">A lista “Anvisa” segue a RDC nº 26/2015, obrigatória em rótulos de alimentos embalados. Em restaurantes, informar é uma boa prática e ajuda quem tem alergia a decidir com segurança. Os pictogramas são desenhos próprios do Mesa Aberta e vêm sempre com o nome escrito, porque não existe um conjunto único e oficial de ícones.</p></div>'+navBtns();}
+
+function pStep1(){
+  return '<h2>Contraste e cores</h2><p class="lead">Escolha o esquema de cores e o tamanho da letra do cardápio digital. A prévia ao lado muda na hora.</p>'+
+  '<div class="stack"><fieldset class="opts"><legend>Esquema de cores</legend>'+
+  Object.keys(THEMES).map(function(k){var t=THEMES[k];return '<label class="opt"><input type="radio" name="theme" data-f="theme" value="'+k+'"'+(S.theme===k?' checked':'')+'>'+
+    '<span class="sw" style="background:'+t.bg+';color:'+t.ink+';border-color:'+t.line+'" aria-hidden="true">Aa</span><span>'+t.n+'</span></label>';}).join('')+
+  '</fieldset><fieldset class="opts"><legend>Tamanho da letra</legend>'+
+  SIZES.map(function(z,i){return '<label class="opt"><input type="radio" name="size" data-f="size" data-num="1" value="'+i+'"'+(S.size===i?' checked':'')+'><span style="font-size:'+z.px+'px;font-weight:700" aria-hidden="true">A</span><span>'+z.n+'</span></label>';}).join('')+
+  '</fieldset><p class="note">Todos os esquemas mantêm contraste mínimo de 4,5:1 entre texto e fundo (nível AA das diretrizes WCAG). O esquema para daltonismo usa azul e laranja, sem depender de vermelho e verde.</p></div>'+navBtns();}
+
+function pStep2(){
+  return '<h2>Audiodescrição</h2><p class="lead">O app monta uma descrição falada de cada prato. Edite o texto e ouça antes de publicar.</p>'+
+  '<div class="stack"><div class="btns"><button type="button" class="btn p" data-a="speakAll">Ouvir o cardápio inteiro</button>'+
+  '<label class="f" for="rate" style="flex-direction:row;align-items:center;gap:8px">Velocidade<select id="rate" data-f="rate" style="width:auto">'+
+  [['0.8','Lenta'],['1','Normal'],['1.25','Rápida']].map(function(o){return '<option value="'+o[0]+'"'+(String(S.rate)===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label></div>'+
+  S.dishes.map(function(d){var k='d'+d.id;return '<div class="dish"><label class="f" for="'+k+'a">'+esc(d.name||'Prato sem nome')+
+    '<textarea id="'+k+'a" data-f="d.desc" data-id="'+d.id+'">'+esc(descOf(d))+'</textarea></label>'+
+    '<div class="btns"><button type="button" class="btn s" data-a="speak" data-id="'+d.id+'">Ouvir</button>'+
+    '<button type="button" class="btn s" data-a="autoDesc" data-id="'+d.id+'">Voltar ao texto automático</button></div></div>';}).join('')+
+  '<p class="note">A voz vem do aparelho de quem abre a página. Em celulares e computadores recentes há vozes em português.</p></div>'+navBtns();}
+
+function pStep3(){
+  var ai=SM?'<div class="btns"><button type="button" class="btn p" data-a="translate" id="tbtn"'+(tBusy?' disabled':'')+'>Traduzir e simplificar com Claude</button></div>'+
+    '<p class="note">Gera inglês, espanhol e uma versão em linguagem simples para todos os pratos. Você pode editar tudo depois.</p>':
+    '<p class="note">A tradução automática não está disponível nesta tela. Preencha os campos à mão.</p>';
+  return '<h2>Libras e tradução</h2><p class="lead">Adicione o link de um vídeo em Libras, as traduções e uma versão em linguagem simples de cada prato.</p>'+
+  '<div class="stack">'+ai+'<p class="status" role="status" id="tstatus"></p>'+
+  S.dishes.map(function(d){var k='d'+d.id;return '<div class="dish"><strong>'+esc(d.name||'Prato sem nome')+'</strong>'+
+    '<label class="f" for="'+k+'l">Link do vídeo em Libras <span class="h">YouTube, Drive ou outro endereço https</span><input type="url" id="'+k+'l" data-f="d.libras" data-id="'+d.id+'" value="'+esc(d.libras)+'" placeholder="https://"></label>'+
+    '<div class="row"><label class="f" for="'+k+'en">Nome em inglês<input type="text" id="'+k+'en" data-f="d.enName" data-id="'+d.id+'" value="'+esc(d.enName)+'"></label>'+
+    '<label class="f" for="'+k+'ei">Ingredientes em inglês<input type="text" id="'+k+'ei" data-f="d.enIng" data-id="'+d.id+'" value="'+esc(d.enIng)+'"></label></div>'+
+    '<div class="row"><label class="f" for="'+k+'sn">Nome em espanhol<input type="text" id="'+k+'sn" data-f="d.esName" data-id="'+d.id+'" value="'+esc(d.esName)+'"></label>'+
+    '<label class="f" for="'+k+'si">Ingredientes em espanhol<input type="text" id="'+k+'si" data-f="d.esIng" data-id="'+d.id+'" value="'+esc(d.esIng)+'"></label></div>'+
+    '<label class="f" for="'+k+'ls">Linguagem simples<textarea id="'+k+'ls" data-f="d.simple" data-id="'+d.id+'" style="min-height:70px">'+esc(d.simple)+'</textarea></label></div>';}).join('')+
+  '</div>'+navBtns();}
+
+function pStep4(){
+  return '<h2>Cardápio em braille</h2><p class="lead">O app converte o cardápio para braille e prepara o arquivo para a impressora. Confira antes de imprimir.</p>'+
+  '<div class="stack"><div class="row"><label class="chk" for="oi"><input type="checkbox" id="oi" data-f="showIng"'+(S.showIng?' checked':'')+'>Incluir ingredientes</label>'+
+  '<label class="chk" for="op"><input type="checkbox" id="op" data-f="showPrice"'+(S.showPrice?' checked':'')+'>Incluir preços</label>'+
+  '<label class="chk" for="oa"><input type="checkbox" id="oa" data-f="showAl"'+(S.showAl?' checked':'')+'>Incluir alérgenos</label>'+
+  '<label class="f" for="wd">Células por linha<select id="wd" data-f="width" data-num="1"><option value="32"'+(S.width==32?' selected':'')+'>32 (folha A4 comum)</option><option value="40"'+(S.width==40?' selected':'')+'>40 (folha larga)</option></select></label></div>'+
+  '<div class="sheet" id="sheet" aria-label="Prévia do cardápio em braille"></div><p class="status" id="sheetinfo"></p>'+
+  '<div class="btns"><button type="button" class="btn p" data-a="dlUni"'+(DL?'':' disabled')+'>Baixar braille (texto)</button>'+
+  '<button type="button" class="btn" data-a="dlBrf"'+(DL?'':' disabled')+'>Baixar para impressora braille</button></div>'+
+  '<p class="note">O arquivo para impressora usa o braille ASCII e vem com extensão .txt. Se o programa da impressora pedir, troque a extensão para .brf.</p>'+
+  '<div class="banner">A conversão usa o braille em português, grau 1, sem abreviações. Peça a uma pessoa que lê braille ou a uma instituição de apoio a pessoas com deficiência visual que revise o arquivo antes de imprimir.</div>'+
+  '<div class="dish"><label class="f" for="bt">Testar o conversor<input type="text" id="bt" data-f="__test" value="Pão de queijo, R$ 12,50"></label><div class="sheet" style="padding:10px"><div class="bl" id="btout"></div></div></div></div>'+navBtns();}
+
+function stat(label,n,tot){return '<li><b>'+n+' de '+tot+'</b>'+label+'</li>';}
+function pStep5(){
+  var D=S.dishes,n=D.length;
+  var a=D.filter(function(d){return d.desc;}).length;
+  var l=D.filter(function(d){return /^https?:\/\//i.test(d.libras);}).length;
+  var t=D.filter(function(d){return d.enName||d.esName;}).length;
+  var s=D.filter(function(d){return d.simple;}).length;
+  return '<h2>Publicação e QR Code</h2><p class="lead">Informe onde o cardápio digital vai ficar e gere o QR Code para a mesa, junto com o cardápio em braille.</p>'+
+  '<div class="stack"><ul class="stats">'+stat('com alérgenos revisados',D.filter(function(d){return d.alOk;}).length,n)+stat('com audiodescrição editada',a,n)+stat('com vídeo em Libras',l,n)+stat('traduzidos',t,n)+stat('em linguagem simples',s,n)+'</ul>'+
+  '<p class="note">Pratos sem texto editado ainda têm audiodescrição automática. Cada item acima pode ser completado nas etapas anteriores.</p>'+
+  '<label class="f" for="url">Endereço do cardápio digital <span class="h">exemplo marcado: troque pelo endereço real</span><input type="url" id="url" data-f="url" value="'+esc(S.url)+'" placeholder="https://"></label>'+
+  '<div class="qrbox" id="qr" role="img" aria-label="QR Code do cardápio"></div>'+
+  '<div class="btns"><button type="button" class="btn p" data-a="dlQr"'+(DL?'':' disabled')+'>Baixar QR Code (SVG)</button>'+
+  '<button type="button" class="btn" data-a="dlBrf"'+(DL?'':' disabled')+'>Baixar braille para impressora</button></div>'+
+  '<p class="note">Este protótipo guarda seus dados só neste navegador. Para publicar o cardápio na internet, o endereço acima precisa existir fora do app.</p></div>'+navBtns();}
+
+function renderPanel(){
+  $('#panel').innerHTML=[pStep0,pStepAl,pStep1,pStep2,pStep3,pStep4,pStep5][S.step]();
+  if(S.step===5){renderSheet();renderTest();}
+  if(S.step===6)renderQR();}
+
+function renderSheet(){
+  var b=buildSheet(),pages=paginate(b.lines),el=$('#sheet');if(!el)return;
+  el.innerHTML=b.lines.map(function(l){return '<div class="bt">'+esc(l.t)+'</div><div class="bl">'+(esc(l.b)||'&nbsp;')+'</div>';}).join('');
+  var info=pages.length+(pages.length===1?' folha':' folhas')+' · '+b.lines.length+' linhas';
+  if(b.un.length)info+=' · sem equivalente em braille: '+b.un.join(' ');
+  $('#sheetinfo').textContent=info;}
+function renderTest(){var el=$('#btout');if(!el)return;var v=$('#bt').value,un={};
+  el.textContent=v.split(/\s+/).filter(Boolean).map(function(w){return convWord(w,un);}).join('⠀')||'⠀';}
+
+function qrSvg(url){
+  var q=qrcode(0,'M');q.addData(url);q.make();var n=q.getModuleCount(),m=2,p='';
+  for(var r=0;r<n;r++)for(var c=0;c<n;c++)if(q.isDark(r,c))p+='M'+(c+m)+' '+(r+m)+'h1v1h-1z';
+  var s=n+2*m;return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>';}
+function renderQR(){var el=$('#qr');if(!el)return;var u=(S.url||'').trim();
+  if(!/^https?:\/\//i.test(u)){el.innerHTML='<span class="note" style="color:#3D5573;text-align:center">Digite um endereço que comece com https:// para gerar o QR Code.</span>';return;}
+  try{el.innerHTML=qrSvg(u);}catch(e){el.innerHTML='<span class="note" style="color:#3D5573;text-align:center">O endereço é longo demais para um QR Code.</span>';}}
+
+function renderPreview(){
+  var t=THEMES[S.theme]||THEMES.padrao,px=SIZES[S.size].px;
+  var langs=['pt'];if(S.dishes.some(function(d){return d.enName;}))langs.push('en');if(S.dishes.some(function(d){return d.esName;}))langs.push('es');
+  if(langs.indexOf(S.lang)<0)S.lang='pt';
+  var L={pt:'Português',en:'English',es:'Español'};
+  $('#pvchips').innerHTML=langs.map(function(k){return '<button type="button" class="chip" data-a="lang" data-k="'+k+'" aria-pressed="'+(S.lang===k)+'">'+L[k]+'</button>';}).join('')+
+    '<button type="button" class="chip" data-a="pvb" aria-pressed="'+!!S.pvBraille+'">Braille</button>';
+  var lg=S.lang,lab={pt:['Ouvir','Ver em Libras','Em linguagem simples'],en:['Listen','Watch in sign language',''],es:['Escuchar','Ver en lengua de señas','']}[lg];
+  $('#preview').innerHTML='<div class="pv" style="--pbg:'+t.bg+';--pink:'+t.ink+';--pacc:'+t.acc+';--pline:'+t.line+';--pfs:'+px+'px" lang="'+lg+'">'+
+   '<h3 style="font-size:1.3em;margin-bottom:6px">'+esc(S.restaurant)+'</h3>'+
+   S.dishes.map(function(d){
+    var nm=lg==='en'?(d.enName||d.name):lg==='es'?(d.esName||d.name):d.name;
+    var ig=lg==='en'?(d.enIng||d.ing):lg==='es'?(d.esIng||d.ing):d.ing;
+    var lib=/^https?:\/\//i.test(d.libras)?'<a class="pbtn" href="'+esc(d.libras)+'" target="_blank" rel="noopener">'+lab[1]+'</a>':'';
+    return '<div class="pd"><div class="pt"><h3>'+esc(nm||'Prato sem nome')+'</h3><span class="pp">'+(d.price?esc(fmtPrice(d.price)):'')+'</span></div>'+
+      (ig?'<p>'+esc(ig)+'</p>':'')+pvAl(d,lg)+(lg==='pt'&&d.simple?'<p><em>'+lab[2]+':</em> '+esc(d.simple)+'</p>':'')+
+      (S.pvBraille?'<div class="pb" aria-hidden="true">'+esc(convWord(nm||'',null))+'</div>':'')+
+      '<div class="pa"><button type="button" class="pbtn" data-a="speak" data-id="'+d.id+'" data-lg="'+lg+'">'+lab[0]+'</button>'+lib+'</div></div>';}).join('')+'</div>';}
+
+function renderAll(){renderNav();renderPanel();renderPreview();}
+function go(i){S.step=Math.max(0,Math.min(STEPS.length-1,i));save();renderNav();renderPanel();var p=$('#panel');p.focus({preventScroll:true});p.scrollIntoView({block:'start'});}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,id=Number(b.dataset.id);
+  if(a==='go')go(id);
+  else if(a==='next')go(S.step+1);
+  else if(a==='prev')go(S.step-1);
+  else if(a==='add'){S.example=false;var d=mk(S.nextId++,'','','');S.dishes.push(d);save();renderPanel();renderPreview();var f=$('#d'+d.id+'n');if(f)f.focus();}
+  else if(a==='rm'){S.example=false;S.dishes=S.dishes.filter(function(x){return x.id!==id;});save();renderPanel();renderPreview();toast('Prato removido.');}
+  else if(a==='speak'){var d2=dish(id);if(!d2)return;var lg=b.dataset.lg||'pt';
+    if(lg==='en')speak((d2.enName||d2.name)+'. '+(d2.enIng||d2.ing)+'. '+(d2.al.length?'Contains: '+algNames(d2.al,'en')+'. ':'')+fmtPrice(d2.price),'en-US');
+    else if(lg==='es')speak((d2.esName||d2.name)+'. '+(d2.esIng||d2.ing)+'. '+(d2.al.length?'Contiene: '+algNames(d2.al,'es')+'. ':'')+fmtPrice(d2.price),'es-ES');
+    else speak(descOf(d2),'pt-BR');}
+  else if(a==='speakAll')speak(S.restaurant+'. '+S.dishes.map(descOf).join(' '),'pt-BR');
+  else if(a==='autoDesc'){var d3=dish(id);d3.desc='';save();renderPanel();}
+  else if(a==='lang'){S.lang=b.dataset.k;save();renderPreview();}
+  else if(a==='pvb'){S.pvBraille=!S.pvBraille;save();renderPreview();}
+  else if(a==='translate')translateAll();
+  else if(a==='dlUni')dl('cardapio-braille.txt',sheetText(false));
+  else if(a==='dlBrf')dl('cardapio-braille-brf.txt',sheetText(true));
+  else if(a==='dlQr'){var u=(S.url||'').trim();if(!/^https?:\/\//i.test(u)){toast('Digite um endereço que comece com https://');return;}try{dl('qrcode-cardapio.svg',qrSvg(u));}catch(x){toast('Não foi possível gerar o QR Code.');}}
+});
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.dataset&&t.dataset.al){var dd=dish(Number(t.dataset.id));if(!dd)return;var m=t.dataset.al,kk=t.dataset.k,arr=dd[m]||[],ix=arr.indexOf(kk);
+    if(t.checked&&ix<0)arr.push(kk);if(!t.checked&&ix>=0)arr.splice(ix,1);dd[m]=arr;S.example=false;save();renderPreview();return;}
+  var f=t.dataset&&t.dataset.f;if(!f)return;
+  if(f==='__test'){renderTest();return;}
+  if(f.indexOf('d.')===0){var d=dish(Number(t.dataset.id));if(!d)return;d[f.slice(2)]=t.type==='checkbox'?t.checked:t.value;}
+  else S[f]=t.type==='checkbox'?t.checked:(t.dataset.num?Number(t.value):t.value);
+  if(S.example&&(f==='restaurant'||f.indexOf('d.')===0)&&f!=='d.desc'){S.example=false;var bn=$('#panel .banner');if(bn&&S.step===0)bn.remove();}
+  save();renderPreview();
+  if(S.step===5)renderSheet();
+  if(S.step===6&&f==='url')renderQR();
+});
+
+/* ---------- Claude: traduções e linguagem simples ---------- */
+function translateAll(){
+  if(!SM||tBusy)return;tBusy=true;var st=$('#tstatus'),bt=$('#tbtn');if(bt)bt.disabled=true;if(st)st.textContent='Pensando…';
+  var data=S.dishes.map(function(d){return {id:d.id,name:d.name,ingredients:d.ing};});
+  var prompt='Você ajuda restaurantes brasileiros a criar cardápios acessíveis. Para cada prato da lista, responda SOMENTE com um array JSON de objetos no formato {"id":número,"enName":texto,"enIng":texto,"esName":texto,"esIng":texto,"simple":texto}. '+
+    '"enName"/"esName" são o nome do prato em inglês e espanhol (mantenha o nome brasileiro quando for um prato típico, com uma tradução curta). "enIng"/"esIng" são os ingredientes traduzidos, separados por vírgula. '+
+    '"simple" é uma frase curta em português, em linguagem simples, sem termos técnicos nem propaganda, que diz o que é o prato e do que é feito.\n\nPratos:\n'+JSON.stringify(data);
+  SM.json(prompt,{modelTier:'quick'}).then(function(r){
+    var n=0;(Array.isArray(r)?r:[]).forEach(function(o){var d=o&&dish(Number(o.id));if(!d)return;
+      ['enName','enIng','esName','esIng','simple'].forEach(function(k){if(typeof o[k]==='string')d[k]=o[k];});n++;});
+    tBusy=false;save();renderPanel();renderPreview();
+    var s2=$('#tstatus');if(s2)s2.textContent=n?'Pronto. Revise os textos antes de publicar.':'A resposta veio vazia. Tente de novo.';
+  }).catch(function(e){tBusy=false;var c=e&&e.code,m=c==='not_granted'?'O uso do Claude não foi permitido.':c==='rate_limited'?'Muitas tentativas. Espere um pouco e tente de novo.':c==='cancelled'?'':'Não foi possível traduzir agora. Tente de novo.';
+    var b2=$('#tbtn');if(b2)b2.disabled=false;var s3=$('#tstatus');if(s3)s3.textContent=m;});
+}
+
+renderAll();
+try{if(window.speechSynthesis)window.speechSynthesis.getVoices();}catch(e){}
+(function(){var c=window.claude;if(!c||!c.use)return;
+  Promise.all([c.use('downloads').catch(function(){return null;}),c.use('sample').catch(function(){return null;})]).then(function(r){
+    DL=r[0]||null;SM=r[1]||null;if(S.step===4||S.step===5||S.step===6){var ae=document.activeElement;if(!(ae&&ae.dataset&&ae.dataset.f))renderPanel();}});})();
+</script>
+
+</body>
+</html>
