@@ -1,0 +1,5 @@
+title: Mesa Aberta
+description: Aplicativo para restaurantes criarem cardápios acessíveis
+theme: jekyll-theme-cayman
+exclude:
+  - README.md
